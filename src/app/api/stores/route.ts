@@ -1,6 +1,7 @@
 import { parseProducts } from "@/lib/parse-products";
 import { db, newId, slugify } from "@/lib/store";
 import { syncCatalog } from "@/lib/catalog";
+import { ensureDemoStore } from "@/lib/seed";
 import type { Store } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
@@ -33,6 +34,7 @@ export async function POST(req: Request) {
 }
 
 export async function GET() {
+  await ensureDemoStore();
   const stores = await db.listStores();
-  return Response.json(stores.map((s) => ({ id: s.id, name: s.name, products: s.products.length, createdAt: s.createdAt })));
+  return Response.json(stores.map((s) => ({ id: s.id, name: s.name, products: s.products.length, createdAt: s.createdAt, sample: s.sample === true })));
 }

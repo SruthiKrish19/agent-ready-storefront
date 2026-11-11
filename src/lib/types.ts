@@ -17,6 +17,8 @@ export type Store = {
   products: Product[];
   createdAt: string;
   parsedBy: "claude" | "fallback";
+  /** true for reviewer-seeded demo data */
+  sample?: boolean;
 };
 
 export type CartItem = { productId: string; name: string; quantity: number; unitPrice: number };
@@ -34,13 +36,16 @@ export type Cart = {
 export type Tracking = { carrier: string; trackingNumber: string; status: string; addedAt: string };
 
 export type Order = {
-  id: string; // PayPal order id
+  id: string; // PayPal order id for real orders; "sample_…" for seeded review data
+  paypalOrderId?: string | null; // null for seeded samples
+  sample?: boolean;
+  note?: string;
   storeId: string;
   cartId: string;
   sessionId: string;
   items: CartItem[];
   total: number;
-  status: "CREATED" | "APPROVED" | "COMPLETED" | "VOIDED" | "FAILED";
+  status: "CREATED" | "APPROVED" | "COMPLETED" | "VOIDED" | "FAILED" | "sample";
   approveUrl?: string;
   captureId?: string;
   payerEmail?: string;
@@ -56,6 +61,7 @@ export type AgentSession = {
   id: string;
   storeId: string;
   client?: string;
+  sample?: boolean;
   events: SessionEvent[];
   startedAt: string;
   lastSeenAt: string;

@@ -19,14 +19,21 @@ export async function POST(req: Request) {
   const [orders, sessions] = await Promise.all([db.listOrders(storeId), db.listSessions(storeId)]);
 
   if (!process.env.ANTHROPIC_API_KEY) {
-    const paid = orders.filter((o) => o.status === "COMPLETED");
+    const real = orders.filter((o) => !o.sample);
+    const sampleOrders = orders.length - real.length;
+    const paid = real.filter((o) => o.status === "COMPLETED");
     const revenue = paid.reduce((s, o) => s + o.total, 0);
+    const liveSessions = sessions.filter((s) => !s.sample);
+    const sampleSessions = sessions.length - liveSessions.length;
     const searches = sessions.flatMap((s) => s.events.filter((e) => e.tool === "search_products").map((e) => e.summary));
+    const sampleOrderNote = sampleOrders ? ` (plus ${sampleOrders} SAMPLE orders seeded for review)` : "";
+    const sampleSessionNote = sampleSessions ? ` (plus ${sampleSessions} sample)` : "";
     return Response.json({
+      mode: "fallback",
       answer:
-        `(Deterministic summary - set ANTHROPIC_API_KEY for a Claude answer)\n` +
-        `${store.name}: ${orders.length} orders, ${paid.length} paid, $${revenue.toFixed(2)} revenue. ` +
-        `${sessions.length} agent sessions. Recent searches: ${searches.slice(0, 5).join("; ") || "none yet"}.`,
+        `(Fallback mode: deterministic summary. Run locally with ANTHROPIC_API_KEY for a Claude answer.)\n` +
+        `${store.name}: ${real.length} real orders, ${paid.length} paid, $${revenue.toFixed(2)} revenue${sampleOrderNote}. ` +
+        `${liveSessions.length} live agent sessions${sampleSessionNote}. Recent searches: ${searches.slice(0, 5).join("; ") || "none yet"}.`,
     });
   }
 
@@ -54,7 +61,7 @@ export async function POST(req: Request) {
     messages.push({ role: "assistant", content: res.content });
     if (res.stop_reason !== "tool_use") {
       const answer = res.content.filter((b): b is Anthropic.TextBlock => b.type === "text").map((b) => b.text).join("\n");
-      return Response.json({ answer });
+      return Response.json({ answer, mode: "claude" });
     }
     const results: Anthropic.ToolResultBlockParam[] = [];
     for (const block of res.content) {

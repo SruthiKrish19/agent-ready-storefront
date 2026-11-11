@@ -2,6 +2,9 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+import { DemoBanner } from "@/components/DemoBanner";
+
+const REPO_URL = "https://github.com/SruthiKrish19/agent-ready-storefront";
 
 const geistSans = Geist({ variable: "--font-geist-sans", subsets: ["latin"] });
 const geistMono = Geist_Mono({ variable: "--font-geist-mono", subsets: ["latin"] });
@@ -12,9 +15,11 @@ export const metadata: Metadata = {
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
+  const hostedDemo = !process.env.ANTHROPIC_API_KEY; // server-side: a local run with a key never shows the banner
   return (
     <html lang="en" className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}>
       <body className="min-h-full flex flex-col bg-[var(--background)] text-[var(--foreground)]">
+        {hostedDemo && <DemoBanner repoUrl={REPO_URL} />}
         <header className="border-b border-black/10 dark:border-white/10">
           <nav className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3">
             <Link href="/" className="flex items-center gap-2 font-semibold">

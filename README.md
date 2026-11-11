@@ -18,6 +18,43 @@ Built for the [PayPal AI Hackathon 2026](https://paypalaihackathon.devpost.com/)
 4. **PayPal redirects to `/return`**, we **capture** the order, attach **shipment tracking** to the capture, and the agent can read it back via `track_order`. A **webhook** listener re-verifies events against PayPal before trusting them.
 5. **Merchant dashboard** (AG Grid): live orders, every agent session's journey (what it searched, carted, bought), catalog with PayPal ids, and an "ask your store" assistant powered by Claude + tools.
 
+## Hosted demo vs running locally
+
+The hosted demo at https://agent-ready-storefront-seven.vercel.app runs **without an AI API key** (credits are not available on that instance), so:
+
+- Product parsing and the "ask your store" assistant run in **fallback mode** (deterministic parser / summary). The UI labels this.
+- Data marked **SAMPLE** (the Sunrise Bakery store, three seeded agent sessions, three seeded orders) exists so reviewers have something to look at. Sample orders have `sample: true`, `status: "sample"` and `paypalOrderId: null`; they never touched PayPal.
+- **PayPal sandbox calls are real.** Catalog sync, `checkout` (Orders v2), capture, tracking and webhooks all hit the PayPal sandbox. Orders you create through MCP are real sandbox orders and are never marked sample.
+- `POST /api/seed` (re)creates the sample data idempotently.
+
+To see the full Claude experience, run it locally with your own keys:
+
+```bash
+git clone https://github.com/SruthiKrish19/agent-ready-storefront
+cd agent-ready-storefront && npm install
+cp .env.example .env.local
+npm run dev   # http://localhost:3000
+```
+
+`.env.local`:
+
+| Var | Required | Notes |
+|---|---|---|
+| `PAYPAL_CLIENT_ID` | yes | PayPal sandbox REST app client id |
+| `PAYPAL_CLIENT_SECRET` | yes | PayPal sandbox REST app secret |
+| `PAYPAL_ENV` | yes | `sandbox` |
+| `ANTHROPIC_API_KEY` | for Claude | Enables Claude catalog parsing and the tool-using store assistant |
+| `ANTHROPIC_BASE_URL` | optional | e.g. `https://ai-gateway.vercel.sh` when routing through Vercel AI Gateway |
+| `KV_REST_API_URL`, `KV_REST_API_TOKEN` | optional | Upstash/Vercel KV for durable storage; otherwise `.data/store.json` |
+
+Connect Claude Code (or any MCP client) to the hosted demo store:
+
+```bash
+claude mcp add --transport http sunrise-bakery https://agent-ready-storefront-seven.vercel.app/api/mcp/sunrise-bakery
+```
+
+Then ask: *"Find me a gluten-free birthday cake under $40 from Sunrise Bakery and buy it."*
+
 ## Demo store
 
 `Sunrise Bakery` is seeded on first request. See `/demo` for the MCP URL, a Claude Desktop config snippet, and a curl example.
@@ -81,7 +118,7 @@ claude mcp add --transport http sunrise http://localhost:3000/api/mcp/sunrise-ba
 | `ANTHROPIC_API_KEY` | no | Enables Claude parsing + assistant; otherwise deterministic fallbacks |
 | `ANTHROPIC_MODEL` | no | default `claude-sonnet-5-5` |
 | `NEXT_PUBLIC_BASE_URL` | prod | Public URL used in PayPal return/cancel URLs and MCP snippets |
-| `UPSTASH_REDIS_REST_URL`, `UPSTASH_REDIS_REST_TOKEN` | no | Durable storage; otherwise in-memory + JSON file |
+| `UPSTASH_REDIS_REST_URL`, `UPSTASH_REDIS_REST_TOKEN` or `KV_REST_API_URL`, `KV_REST_API_TOKEN` | no | Durable storage; otherwise in-memory + JSON file |
 
 ### Testing the checkout
 
