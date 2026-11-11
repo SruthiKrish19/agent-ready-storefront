@@ -72,9 +72,11 @@ declare global {
 
 async function kv(): Promise<KV> {
   if (globalThis.__kv) return globalThis.__kv;
-  if (process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN) {
+  const redisUrl = process.env.UPSTASH_REDIS_REST_URL ?? process.env.KV_REST_API_URL;
+  const redisToken = process.env.UPSTASH_REDIS_REST_TOKEN ?? process.env.KV_REST_API_TOKEN;
+  if (redisUrl && redisToken) {
     const { Redis } = await import("@upstash/redis");
-    globalThis.__kv = new UpstashKV(Redis.fromEnv());
+    globalThis.__kv = new UpstashKV(new Redis({ url: redisUrl, token: redisToken }));
   } else {
     globalThis.__kv = new MemoryFileKV();
   }
