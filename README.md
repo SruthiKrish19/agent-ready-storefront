@@ -1,5 +1,8 @@
 # Agent-Ready Storefront
 
+**Live demo:** https://agent-ready-storefront-seven.vercel.app  
+**Hackathon:** PayPal AI Hackathon 2026 (Devpost)
+
 **Paste a product list, get a hosted MCP storefront that AI shopping agents can browse and buy from, with PayPal Orders settling every purchase.**
 
 Built for the [PayPal AI Hackathon 2026](https://paypalaihackathon.devpost.com/) · Agentic Commerce.
